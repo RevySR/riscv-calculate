@@ -3,9 +3,8 @@ name: gentoo-visionfive
 on:
   push:
     paths:
-      - '.github/workflow/gentoo-visionfive.yml'
+      - '.github/workflows/gentoo-visionfive.yml'
       - 'visionfive/*'
-
 
   schedule:
     - cron: "0 2 * * *"
@@ -15,6 +14,7 @@ jobs:
     runs-on: 	ubuntu-22.04
     env:
       download_url_prefix: https://distfiles.gentoo.org/releases/riscv/autobuilds/
+      base_path: visionfive
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -40,9 +40,9 @@ jobs:
 
       - name: Create rootfs.img & Mount Partition
         run: |
-              dd if=/dev/zero of=visionfive.img bs=7M count=1024
-              sfdisk visionfive.img < visionfive/part-table.conf
-              sudo losetup -P /dev/loop100 visionfive.img
+              dd if=/dev/zero of=${{ env.base_path }}.img bs=7M count=1024
+              sfdisk ${{ env.base_path }}.img < ${{ env.base_path }}/part-table.conf
+              sudo losetup -P /dev/loop100 ${{ env.base_path }}.img
               sudo mkfs.ext4 /dev/loop100p3
               sudo mkfs.ext4 /dev/loop100p4
               sudo mkfs.vfat -F32 /dev/loop100p2
@@ -74,13 +74,12 @@ jobs:
                 echo 'MAKEOPTS="-j2"' | sudo tee -a $OLDPWD/etc/portage/make.conf
                 sudo mkdir --parents $OLDPWD/etc/portage/repos.conf
                 sudo cp -v $OLDPWD/usr/share/portage/config/repos.conf $OLDPWD/etc/portage/repos.conf/gentoo.conf
-                cat ../visionfive/fstab | sudo tee -a $OLDPWD/etc/fstab
-                sudo cp -v ../visionfive/50-dhcp.network $OLDPWD/etc/systemd/network/
+                cat ../${{ env.base_path }}/fstab | sudo tee -a $OLDPWD/etc/fstab
+                sudo cp -v ../${{ env.base_path }}/50-dhcp.network $OLDPWD/etc/systemd/network/
               popd
 
       - name: Compile Kernel && Install
         run: |
-              
               git clone --depth=1 https://github.com/starfive-tech/linux.git kernel
               pushd kernel
                 make CROSS_COMPILE=riscv64-linux-gnu- ARCH=riscv visionfive_defconfig
@@ -135,17 +134,17 @@ jobs:
               sudo rm -rf rootfs/var/db/repos/*
               sudo umount -l rootfs
               sudo losetup -d /dev/loop100
-              export file_name=gentoo-visionfive-$(date +%Y%m%d%H%M%S)
+              export file_name=gentoo-${{ env.base_path }}-$(date +%Y%m%d%H%M%S)
               echo "file_name=${file_name}" >> $GITHUB_ENV
-              mv visionfive.img $file_name.img
+              mv ${{ env.base_path }}.img $file_name.img
               zstd -T0 --ultra -20 $file_name.img
               ls -al .
 
       - name: 'Upload Artifact'
         uses: actions/upload-artifact@v3
         with:
-          name: gentoo-visionfive-img
-          path: gentoo-visionfive-*.img.zst
+          name: gentoo-${{ env.base_path }}-img
+          path: gentoo-${{ env.base_path }}-*.img.zst
           retention-days: 3
       
       - name: Create GitHub release
@@ -156,4 +155,4 @@ jobs:
           title: ${{ env.file_name }}
           prerelease: true
           files: |
-            gentoo-visionfive-*.img.zst
+            gentoo-${{ env.base_path }}-*.img.zst
