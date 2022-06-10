@@ -76,6 +76,7 @@ jobs:
                 sudo cp -v $OLDPWD/usr/share/portage/config/repos.conf $OLDPWD/etc/portage/repos.conf/gentoo.conf
                 cat ../${{ env.base_path }}/fstab | sudo tee -a $OLDPWD/etc/fstab
                 sudo cp -v ../${{ env.base_path }}/50-dhcp.network $OLDPWD/etc/systemd/network/
+                echo 'PORTAGE_BINHOST="https://mirror.onfoo.top/calculate/grp/riscv64/"' | sudo tee -a $OLDPWD/etc/portage/make.conf
               popd
 
       - name: Compile Kernel && Install
@@ -115,7 +116,7 @@ jobs:
                 sudo chroot . /bin/bash -c "source /etc/profile && echo root:Riscv2022# | chpasswd"
                 sudo chroot . /bin/bash -c "source /etc/profile && echo gentoo-starfive > /etc/hostname"
                 sudo chroot . /bin/bash -c "source /etc/profile && emerge-webrsync"
-                sudo chroot . /bin/bash -c "source /etc/profile && emerge -v tmux net-wireless/wpa_supplicant"
+                sudo chroot . /bin/bash -c "source /etc/profile && emerge -v -g htop neofetch tmux net-wireless/wpa_supplicant"
                 if [ x"$(cat boot/latest-config | grep CONFIG_MODULES=y)" = x"CONFIG_MODULES=y" ]; then
                   sudo chroot . /bin/bash -c "source /etc/profile && emerge -v dev-vcs/git tmux dracut"
                   sudo chroot . /bin/bash -c 'source /etc/profile && cd /boot && for file in $(ls /lib/modules/); do dracut initrd.img-$file $file; done'
@@ -129,6 +130,7 @@ jobs:
       - name: Clean && Umount && Compress
         id: compress
         run: |
+              sudo sed -i '/PORTAGE_BINHOST=/d' rootfs/etc/portage/make.conf
               sudo rm -rf rootfs/var/tmp/portage/* rootfs/var/cache/distfiles/*
               sudo rm -rf rootfs/root/*
               sudo rm -rf rootfs/var/db/repos/*
