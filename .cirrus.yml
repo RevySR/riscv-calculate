@@ -6,6 +6,7 @@ compute_engine_instance:
   memory: 32G
 
 env:
+  GITHUB_TOKEN: ENCRYPTED[2a3767f52b8878062329a7597cafea6cb63236046772a2a286f57447634dec2c49b32f3f6a4637fd9df09d7a3a3e6548]
   download_url_prefix: https://distfiles.gentoo.org/releases/riscv/autobuilds/
   CROSS_COMPILE: riscv64-linux-gnu-
   ARCH: riscv
@@ -329,6 +330,9 @@ task:
     mv rootfs.img ${file_name}.img
     zstd -T0 --ultra -20 $file_name.img
     ls -al .
+
+  upload_publish_script: |
+    ./publish.sh
 
   upload_artifacts:
     path: "gentoo-*-*.img.zst"
