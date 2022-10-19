@@ -228,6 +228,8 @@ task:
           echo 'CONFIG_MEDIA_CONTROLLER_REQUEST_API=y' >> ${DIR}/arch/riscv/configs/nezha_defconfig
           echo 'CONFIG_V4L_MEM2MEM_DRIVERS=y' >> ${DIR}/arch/riscv/configs/nezha_defconfig
           echo 'CONFIG_VIDEO_SUNXI_CEDRUS=y' >> ${DIR}/arch/riscv/configs/nezha_defconfig
+          # enable binfmt_misc
+          echo 'CONFIG_BINFMT_MISC=y' >> ${DIR}/arch/riscv/configs/nezha_defconfig
 
           make CROSS_COMPILE=riscv64-linux-gnu- ARCH=riscv nezha_defconfig
           make CROSS_COMPILE=riscv64-linux-gnu- ARCH=riscv -j$(nproc)
